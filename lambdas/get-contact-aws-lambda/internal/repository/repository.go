@@ -64,6 +64,13 @@ func (r *LambdaRepository) GetItem(request dto.Request) (dto.Contact, error) {
 		}
 	}
 
+	if len(dbContact.Item) == 0 {
+		return contact, &dto.DynamoDbError{
+			Op:  Get,
+			Err: dto.GetItemError,
+		}
+	}
+
 	log.Printf("EVENT: %s", &dbContact.Item)
 
 	return contact, nil

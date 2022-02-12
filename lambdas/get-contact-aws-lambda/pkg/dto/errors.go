@@ -7,8 +7,8 @@ import (
 )
 
 var (
-	GetItemError      = errors.New("cannot find item")
-	WrongRequestError = errors.New("invalid input")
+	GetItemError = errors.New("cannot find item")
+	InvalidInput = errors.New("invalid input")
 )
 
 type DynamoDbError struct {

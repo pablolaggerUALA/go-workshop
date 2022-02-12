@@ -63,7 +63,7 @@ func validateRequest(req dto.Request) error {
 	if req.Uuid == "" {
 		return &dto.ValidationError{
 			Field: "uuid",
-			Err:   dto.WrongRequestError,
+			Err:   dto.InvalidInput,
 		}
 	}
 	return nil
