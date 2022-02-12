@@ -2,7 +2,6 @@ package processor
 
 import (
 	"uala/go-workshop/internal/repository"
-	"uala/go-workshop/internal/utils"
 	"uala/go-workshop/pkg/dto"
 )
 
@@ -14,10 +13,6 @@ type LambdaProcessor struct {
 	ContactRepository repository.Repository
 }
 
-const (
-	Created = "CREATED"
-)
-
 func New(r repository.Repository) Processor {
 	return &LambdaProcessor{
 		ContactRepository: r,
@@ -25,14 +20,8 @@ func New(r repository.Repository) Processor {
 }
 
 func (p *LambdaProcessor) Process(req dto.Request) (dto.Contact, error) {
-	contact := dto.Contact{
-		Uuid:      utils.GenerateUUID(),
-		FirstName: req.FirstName,
-		LastName:  req.LastName,
-		Status:    Created,
-	}
 
-	item, err := p.ContactRepository.Insert(contact)
+	item, err := p.ContactRepository.GetItem(req)
 	if err != nil {
 		return dto.Contact{}, err
 	}

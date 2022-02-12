@@ -5,21 +5,25 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
+	"log"
 	"uala/go-workshop/pkg/dto"
 )
 
 const (
 	TableName = "Contacts_Lagger"
-	Insert    = "INSERT"
+	Get       = "GET"
 )
 
 type Repository interface {
-	Insert(contact dto.Contact) (dto.Contact, error)
+	GetItem(request dto.Request) (dto.Contact, error)
 }
 
 type LambdaRepository struct {
 	TableName string
 	svc       *dynamodb.DynamoDB
+}
+
+type GetItemOutput struct {
 }
 
 func New() Repository {
@@ -33,30 +37,34 @@ func New() Repository {
 	}
 }
 
-func (r *LambdaRepository) Insert(contact dto.Contact) (dto.Contact, error) {
-	// Convert the Record Go type to dynamodb attribute value type using MarshalMap
-	item, err := dynamodbattribute.MarshalMap(contact)
-	if err != nil {
-		return dto.Contact{}, &dto.DynamoDbError{
-			Op:  Insert,
-			Err: dto.InvalidInputError,
-		}
-	}
-
-	// Declare a new PutItemInput
-	input := &dynamodb.PutItemInput{
-		Item:      item,
+func (r *LambdaRepository) GetItem(request dto.Request) (dto.Contact, error) {
+	inputItem := &dynamodb.GetItemInput{
+		Key: map[string]*dynamodb.AttributeValue{
+			"Uuid": {
+				S: aws.String(request.Uuid),
+			},
+		},
 		TableName: aws.String(r.TableName),
 	}
 
-	// Put new item into the dynamodb table
-	_, err = r.svc.PutItem(input)
+	// Get item from dynamodb table
+	dbContact, err := r.svc.GetItem(inputItem)
 	if err != nil {
 		return dto.Contact{}, &dto.DynamoDbError{
-			Op:  Insert,
-			Err: dto.InsertionError,
+			Op:  Get,
+			Err: dto.GetItemError,
 		}
 	}
+
+	contact := dto.Contact{}
+	if err := dynamodbattribute.UnmarshalMap(dbContact.Item, &contact); err != nil {
+		return contact, &dto.DynamoDbError{
+			Op:  Get,
+			Err: dto.GetItemError,
+		}
+	}
+
+	log.Printf("EVENT: %s", &dbContact.Item)
 
 	return contact, nil
 }
